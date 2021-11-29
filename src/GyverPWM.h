@@ -10,7 +10,7 @@
     MIT License
 
     Версии:
-    v1.4
+    v1.5
 */
 
 #ifndef GyverPWM_h
@@ -18,12 +18,24 @@
 #include <Arduino.h>
 
 #define CORRECT_PWM 1
-#define FAST_PWM 0
+#define FAST_PWM 	0
+
+#if not (                        \
+defined (__AVR_ATmega48P__)  ||  \
+defined (__AVR_ATmega88P__)  ||  \
+defined (__AVR_ATmega168P__) ||  \
+defined (__AVR_ATmega328P__))                            
+#error "This MCU is not supported in GyverPWM.h library"  
+#endif
+
+#define MIN_PWMFREQ_CORRECT(a) ((F_CPU / a) / 510)
+#define MIN_PWMFREQ_FAST(a)    ((F_CPU / a) / 256)
+
 // ============== Функции для расширенной генерации ШИМ сигнала ==============
 
 // Данные функции убирают один ШИМ выход у 8-ми битных таймеров, оставляя нам ШИМ пины D3, D5, D9 и D10 на ATmega328
 
-void PWM_frequency(byte pin, long freq, uint8_t correct);
+void PWM_frequency(uint8_t pin, uint32_t freq, uint8_t correct);
 /*	PWM_freqency(пин, частота, режим) - запустить ШИМ с выбранной частотой
     - Пины: D3 (таймер 2), D5 (таймер 0 - сломает millis/delay), D9 и D10 (таймер 1)
     - Режим: 0 (FAST_PWM), 1 (CORRECT_PWM)
@@ -32,7 +44,7 @@ void PWM_frequency(byte pin, long freq, uint8_t correct);
         - Разрядность в этом режиме приведена к 8 битам, на деле шаги изменения разные!
 */
 
-void PWM_resolution(byte pin, byte res, uint8_t correct);
+void PWM_resolution(uint8_t pin, uint8_t res, uint8_t correct);
 /*	PWM_resolution(пин, разрядность, режим) - запустить ШИМ с выбранной разрядностью
     - Пины: D3 (таймер 2), D5 (таймер 0 - сломает millis/delay), D9 и D10 (таймер 1)
     - Режим: 0 (FAST_PWM), 1 (CORRECT_PWM)
@@ -42,7 +54,7 @@ void PWM_resolution(byte pin, byte res, uint8_t correct);
         - Пределы заполнения для разной разрядности указаны в таблице
 */
 
-void PWM_set(byte pin, unsigned int duty);
+void PWM_set(uint8_t pin, uint16_t duty);
 /*	PWM_set(пин, заполнение) - изменить заполнение на выбранном пине
     - Пин: D3, D5, D6, D9, D10, D11
     - Заполнение: зависит от разрешения и режима (см. таблицу)
@@ -50,53 +62,53 @@ void PWM_set(byte pin, unsigned int duty);
         - При использовании PWM_resolution макс. значение заполнения равно (2^разрядность - 1), также смотри таблицу
 */
 
-void PWM_detach(byte pin);		// отключает ШИМ на выбранном пине (позволяет использовать digital Read/Write)
-void PWM_attach(byte pin);		// подключает ШИМ на выбранном пине (с последними настройками)
-void PWM_default(byte pin);		// сброс настроек соответствующего пину таймера на "стандартные" для Arduino
+void PWM_detach(uint8_t pin);		// отключает ШИМ на выбранном пине (позволяет использовать digital Read/Write)
+void PWM_attach(uint8_t pin);		// подключает ШИМ на выбранном пине (с последними настройками)
+void PWM_default(uint8_t pin);		// сброс настроек соответствующего пину таймера на "стандартные" для Arduino
 
-void PWM_16KHZ_D3(byte duty);
+void PWM_16KHZ_D3(uint8_t duty);
 /* 	Запуск ШИМ с частотой 16 кГц на пине D3
     - Отменяет настройки PWM_frequency/PWM_resolution
     - Разрядность приведена к 8 битам (заполнение 0-255)
     - Заполнение меняет сама (не нужно вызывать PWM_set) */
 
-void PWM_20KHZ_D3(byte duty);
+void PWM_20KHZ_D3(uint8_t duty);
 /* 	Запуск ШИМ с частотой 20 кГц на пине D3
     - Отменяет настройки PWM_frequency/PWM_resolution
     - Разрядность приведена к 8 битам (заполнение 0-255)
     - Заполнение меняет сама (не нужно вызывать PWM_set) */
 
-void PWM_16KHZ_D5(byte duty);
+void PWM_16KHZ_D5(uint8_t duty);
 /* 	Запуск ШИМ с частотой 16 кГц на пине D5
     - Отменяет настройки PWM_frequency/PWM_resolution
     - Разрядность приведена к 8 битам (заполнение 0-255)
     - Заполнение меняет сама (не нужно вызывать PWM_set) */
 
-void PWM_20KHZ_D5(byte duty);
+void PWM_20KHZ_D5(uint8_t duty);
 /* 	Запуск ШИМ с частотой 20 кГц на пине D5
     - Отменяет настройки PWM_frequency/PWM_resolution
     - Разрядность приведена к 8 битам (заполнение 0-255)
     - Заполнение меняет сама (не нужно вызывать PWM_set) */
 
-void PWM_16KHZ_D9(int duty);
+void PWM_16KHZ_D9(uint16_t duty);
 /* 	Запуск ШИМ с частотой 16 кГц (15.6 кГц) на пине D9
     - Отменяет настройки PWM_frequency/PWM_resolution
     - Разрядность ровно 10 бит (заполнение 0-1023)
     - Заполнение меняет сама (не нужно вызывать PWM_set) */
 
-void PWM_20KHZ_D9(int duty);
+void PWM_20KHZ_D9(uint16_t duty);
 /* 	Запуск ШИМ с частотой 20 кГц на пине D9
     - Отменяет настройки PWM_frequency/PWM_resolution
     - Разрядность приведена к 10 битам (заполнение 0-1023)
     - Заполнение меняет сама (не нужно вызывать PWM_set) */
 
-void PWM_16KHZ_D10(int duty);
+void PWM_16KHZ_D10(uint16_t duty);
 /* 	Запуск ШИМ с частотой 16 кГц (15.6 кГц) на пине D10
     - Отменяет настройки PWM_frequency/PWM_resolution
     - Разрядность ровно 10 бит (заполнение 0-1023)
     - Заполнение меняет сама (не нужно вызывать PWM_set) */
 
-void PWM_20KHZ_D10(int duty);
+void PWM_20KHZ_D10(uint16_t duty);
 /* 	Запуск ШИМ с частотой 20 кГц на пине D10
     - Отменяет настройки PWM_frequency/PWM_resolution
     - Разрядность приведена к 10 битам (заполнение 0-1023)
@@ -143,13 +155,13 @@ ________________________________________________________________________________
 
 // Данные функции НЕ убирают один ШИМ выход у 8-ми битных таймеров, можно использовать все 6 ШИМ пинов с настроенной частотой! См. таблицу.
 
-void PWM_prescaler(byte pin, byte mode);
+void PWM_prescaler(uint8_t pin, uint8_t mode);
 /*	PWM_prescaler(пин, режим) - установить предделитель таймера (меняет частоту ШИМ)
     - Пин: D3, D5, D6, D9, D10, D11
     - Режим: 1-7, см. таблицу частот
 */
 
-void PWM_mode(byte pin, uint8_t mode);
+void PWM_mode(uint8_t pin, uint8_t mode);
 /*	PWM_mode(пин, режим) - установить режим генерации ШИМ
     - Пин: D3, D5, D6, D9, D10, D11
     - Режим: 0 - FastPWM, 1 - Phase-correct, см. таблицу частот
