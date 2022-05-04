@@ -1,3 +1,5 @@
+This is an automatic translation, may be incorrect in some places. See sources and examples!
+
 # GyverPWM
 Library for extended PWM generation on ATmega328 (Arduino UNO/Nano/Pro Mini...)
 - Hardware generation of PWM with adjustable frequency and bit depth
