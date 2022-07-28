@@ -11,6 +11,7 @@
 
     Версии:
     v1.5
+    v1.6 - поддержка ATmega168
 */
 
 #ifndef GyverPWM_h
@@ -24,6 +25,7 @@
 defined (__AVR_ATmega48P__)  ||  \
 defined (__AVR_ATmega88P__)  ||  \
 defined (__AVR_ATmega168P__) ||  \
+defined (__AVR_ATmega168__) ||  \
 defined (__AVR_ATmega328P__))                            
 #error "This MCU is not supported in GyverPWM.h library"  
 #endif
