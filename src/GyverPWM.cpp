@@ -154,7 +154,7 @@ void PWM_resolution(uint8_t pin, uint8_t resolution, uint8_t correct) {
 
 /* Установка заполнения ШИМ сигнала на указанном пине */
 void PWM_set(uint8_t pin, uint16_t duty) {
-  if (duty < 1) {PWM_detach(pin); return;}	// Если заполнение 0 - детачим пин и в LOW
+  if (duty < 1) {PWM_detach(pin); PIN_set(pin, LOW); return;}	// Если заполнение 0 - детачим пин и в LOW
 
   switch (pin) {
     case 3: // Timer2 - B
