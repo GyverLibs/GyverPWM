@@ -1,10 +1,32 @@
 #include "GyverPWM.h"
 
 bool isDefault[3] = {true, true, true};		// Массив default - флагов	
+#if defined(OCR3A)
+bool isMapping[4] = {false, false, false, false};  // Массив map - флагов
+
+/* Установка режима 8 бит таймеру 3 */
+void PWM_TMR3_8BIT() {
+    TCCR3A = TCCR3A & 0xE0 | (1 << WGM30);
+}
+
+/* Установка режима 10 бит таймеру 3 */
+void PWM_TMR3_10BIT() {
+    TCCR3A = TCCR3A & 0xE0 | (1 << WGM30 | 1 << WGM31);
+}
+#else
 bool isMapping[3] = {false, false, false};  // Массив map - флагов
 
+void PWM_TMR3_8BIT() {}
+void PWM_TMR3_10BIT() {}
+#endif
+
 /* Функция быстрой установки состояния пина	*/
-void PIN_set(uint8_t pin, uint8_t x) {		
+void PIN_set(uint8_t pin, uint8_t x) {	
+#if defined(OCR3A)
+  if (pin == 1 || pin == 2) {
+    bitWrite(PORTF, pin, x);
+  } else
+#endif
     if (pin < 8) bitWrite(PORTD, pin, x);
     else if (pin < 14) bitWrite(PORTB, (pin - 8), x);
     else if (pin < 20) bitWrite(PORTC, (pin - 14), x);
@@ -28,6 +50,15 @@ void PWM_default(uint8_t pin) {
       TCCR1A = 0b01;
       TCCR1B = 0b11;
       break;
+
+#if defined(OCR3A)
+    case 1: // Timer3 - A
+    case 2: // Timer3 - B
+      isMapping[3] = false;
+      TCCR3A = 0b01;
+      TCCR3B = 0b11;
+      break;
+#endif
 
     case 11: // Timer2 - A
     case 3:  // Timer2 - B
@@ -119,6 +150,23 @@ void PWM_frequency(uint8_t pin, uint32_t frequency, uint8_t correct) {
         TCCR1B = 1 << WGM13 | 1 << WGM12 | 0b001;
         ICR1 = (F_CPU / frequency) - 1;		// Считаем
       } break;
+
+#if defined(OCR3A)
+    case 1:    // Timer3 - A
+    case 2: {  // Timer3 - B
+               // аналогично Timer1
+      isMapping[3] = true;
+      TCCR3A = 1 << WGM31;
+      if (correct) {
+        TCCR3B = 1 << WGM33 | 0b001;
+        ICR3 = F_CPU / (frequency * 2UL);
+      } else {
+        TCCR3B = 1 << WGM33 | 1 << WGM32 | 0b001;
+        ICR3 = (F_CPU / frequency) - 1;
+      }
+      break;
+    }
+#endif
   }
 }
 
@@ -149,6 +197,18 @@ void PWM_resolution(uint8_t pin, uint8_t resolution, uint8_t correct) {
       TCCR1B = (correct ? (1 << WGM13) : (1 << WGM13 | 1 << WGM12)) | 1 << CS10;
       ICR1 = (1 << constrain(resolution, 4, 16)) - 1;
       break;
+
+#if defined(OCR3A)
+    case 1:    // Timer3 - A
+    case 2: {  // Timer3 - B
+               // аналогично Timer1
+      isMapping[3] = false;
+      TCCR3A = 1 << WGM31;
+      TCCR3B = (correct ? (1 << WGM33) : (1 << WGM33 | 1 << WGM32)) | 1 << CS30;
+      ICR3 = (1 << constrain(resolution, 4, 16)) - 1;
+      break;
+    }
+#endif
   }
 }
 
@@ -192,6 +252,28 @@ void PWM_set(uint8_t pin, uint16_t duty) {
         if (duty == 255){ PWM_detach(pin); PIN_set(pin, HIGH);}
         else {PWM_attach(pin); OCR2A = duty;}
       } break;
+
+#if defined(OCR3A)
+    case 1:    // Timer3 - A
+    case 2: {  // Timer3 - B
+               // аналогично Timer1
+      if (isMapping[3]) {
+        duty = constrain(map(duty, 0, 255, 0, ICR3), 0, ICR3);
+      }
+      if (duty == ICR3) {
+        PWM_detach(pin);
+        PIN_set(pin, HIGH);
+      } else {
+        PWM_attach(pin);
+        if (pin == 2) {
+          OCR3B = duty;
+        } else {
+          OCR3A = duty;
+        }
+      }
+      break;
+    }
+#endif
   }
 }
 
@@ -204,6 +286,11 @@ void PWM_detach(uint8_t pin) {
     case 9:  bitClear(TCCR1A, COM1A1);  break;
     case 10: bitClear(TCCR1A, COM1B1);  break;
     case 11: bitClear(TCCR2A, COM2A1);  break;
+
+#if defined(OCR3A)
+    case 1:  bitClear(TCCR3A, COM3A1);  break;
+    case 2:  bitClear(TCCR3A, COM3B1);  break;
+#endif
   } 
 }
 
@@ -216,6 +303,10 @@ void PWM_attach(uint8_t pin) {
     case 9:  bitSet(TCCR1A, COM1A1);  break;
     case 10: bitSet(TCCR1A, COM1B1);  break;
     case 11: bitSet(TCCR2A, COM2A1);  break;
+#if defined(OCR3A)
+    case 1:  bitSet(TCCR3A, COM3A1);  break;
+    case 2:  bitSet(TCCR3A, COM3B1);  break;
+#endif
   }
 }
 
@@ -228,6 +319,10 @@ void PWM_prescaler(uint8_t pin, uint8_t prescaler) { //
     case 10: TCCR1B = TCCR1B & 0xF8 | prescaler; break;
     case 3:
     case 11: TCCR2B = TCCR2B & 0xF8 | prescaler; break;
+#if defined(OCR3A)
+    case 1:
+    case 2:  TCCR3B = TCCR3B & 0xF8 | prescaler; break;
+#endif
   }
 }
 
@@ -240,6 +335,10 @@ void PWM_mode(uint8_t pin, uint8_t mode) {
     case 10 : TCCR1B = TCCR1B & 0xF7 | (mode ? 0 : 1 << WGM12); break;
     case 3 :
     case 11 : TCCR2A = TCCR2A & 0xFC | (mode ? 0b01 : 0b11);    break;
+#if defined(OCR3A)
+    case 1:
+    case 2:   TCCR3B = TCCR3B & 0xF7 | (mode ? 0 : 1 << WGM32); break;
+#endif
   }
 }
 
@@ -358,4 +457,27 @@ float PWM_square_D9(float frequency) {
     ICR1 = ((float)F_CPU / (frequency * 2UL)) - 1;
     return ((float)F_CPU / ((ICR1 + 1) * 2.0f));
   }
+}
+
+// инициализация пина таймера
+void init_timer_pin(byte pin) {
+  switch (pin) {
+    case 3:
+    case 5:
+    case 6:
+    case 9:
+    case 10:
+    case 11: {
+      pinMode(pin, OUTPUT);
+      break;
+    }
+#if defined(OCR3A)
+    case 1:
+    case 2: {
+      bitClear(DDRD, pin);
+      bitSet(DDRF, pin);
+      break;
+    }
+#endif
+  };
 }
