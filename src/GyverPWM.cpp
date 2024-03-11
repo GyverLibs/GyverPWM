@@ -1,7 +1,7 @@
 #include "GyverPWM.h"
 
-bool isDefault[3] = {true, true, true};		// Массив default - флагов	
-bool isMapping[3] = {false, false, false};  // Массив map - флагов
+static bool isDefault[3] = {true, true, true};		// Массив default - флагов	
+static bool isMapping[3] = {false, false, false};  // Массив map - флагов
 
 /* Функция быстрой установки состояния пина	*/
 void PIN_set(uint8_t pin, uint8_t x) {		
