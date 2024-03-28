@@ -56,6 +56,9 @@ void PWM_resolution(uint8_t pin, uint8_t res, uint8_t correct);
         - Пределы заполнения для разной разрядности указаны в таблице
 */
 
+
+#define PWM_duty(pin, duty) PWM_set(pin, duty)
+
 void PWM_set(uint8_t pin, uint16_t duty);
 /*	PWM_set(пин, заполнение) - изменить заполнение на выбранном пине
     - Пин: D3, D5, D6, D9, D10, D11
