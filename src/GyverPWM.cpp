@@ -227,11 +227,11 @@ void PWM_attach(uint8_t pin) {
 void PWM_prescaler(uint8_t pin, uint8_t prescaler) { //
   switch (pin) {
     case 5:
-    case 6:  TCCR0B = TCCR0B & 0xF8 | prescaler; break;
+    case 6:  TCCR0B = (TCCR0B & 0xF8) | prescaler; break;
     case 9:
-    case 10: TCCR1B = TCCR1B & 0xF8 | prescaler; break;
+    case 10: TCCR1B = (TCCR1B & 0xF8) | prescaler; break;
     case 3:
-    case 11: TCCR2B = TCCR2B & 0xF8 | prescaler; break;
+    case 11: TCCR2B = (TCCR2B & 0xF8) | prescaler; break;
   }
 }
 
@@ -239,22 +239,22 @@ void PWM_prescaler(uint8_t pin, uint8_t prescaler) { //
 void PWM_mode(uint8_t pin, uint8_t mode) {
   switch (pin) {
     case 5:
-    case 6:   TCCR0A = TCCR0A & 0xFC | (mode ? 0b01 : 0b11);    break;
+    case 6:   TCCR0A = (TCCR0A & 0xFC) | (mode ? 0b01 : 0b11);    break;
     case 9 :
-    case 10 : TCCR1B = TCCR1B & 0xF7 | (mode ? 0 : 1 << WGM12); break;
+    case 10 : TCCR1B = (TCCR1B & 0xF7) | (mode ? 0 : 1 << WGM12); break;
     case 3 :
-    case 11 : TCCR2A = TCCR2A & 0xFC | (mode ? 0b01 : 0b11);    break;
+    case 11 : TCCR2A = (TCCR2A & 0xFC) | (mode ? 0b01 : 0b11);    break;
   }
 }
 
 /* Установка режима 8 бит таймеру 1 */
 void PWM_TMR1_8BIT() {
-    TCCR1A = TCCR1A & 0xE0 | (1 << WGM10);
+    TCCR1A = (TCCR1A & 0xE0) | (1 << WGM10);
 }
 
 /* Установка режима 10 бит таймеру 1 */
 void PWM_TMR1_10BIT() {
-    TCCR1A = TCCR1A & 0xE0 | (1 << WGM10 | 1 << WGM11);
+    TCCR1A = (TCCR1A & 0xE0) | (1 << WGM10 | 1 << WGM11);
 }
 
 /* ШИМ 16 кГц "8 Бит" на пине 3 */
